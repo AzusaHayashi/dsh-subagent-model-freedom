@@ -1,0 +1,21 @@
+# 依赖
+node_modules/
+
+# 日志
+*.log
+
+# 系统垃圾
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# TypeScript 增量编译信息
+*.tsbuildinfo
+
+# 编辑器
+.idea/
+.vscode/
+*.swp
+
+# 注意：lib/ 是发布产物的一部分（package.json 的 files 字段包含它），
+# 不要忽略。
