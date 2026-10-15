@@ -1,7 +1,7 @@
 {
   "name": "dsh-subagent-model-freedom",
   "version": "0.1.0",
-  "description": "让 DSH 子代理可以自由选择模型路由——新会话创建时自动注入 subagent/model-selection-policy，使 subagent 工具暴露 provider/model/reasoning_effort 参数。默认授权 WorkBuddy 免费模型，可配置任意 provider/model 路由。",
+  "description": "让 DSH 子代理可以自由选择模型路由——新会话创建时自动注入 subagent/model-selection-policy，使 subagent 工具暴露 provider/model/reasoning_effort 参数。不写 config 时默认授权 WorkBuddy 当前免费模型（hy3 / step-5-preview，限时促销），可配置任意 provider/model 路由。",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

@@ -9,9 +9,11 @@ DSH 的 `subagent` 工具默认**不暴露** `provider` / `model` 参数——�
 - 那是 Host 级设置，要在 GUI 里点（或手写 patch），且**只对新会话生效**；
 - `allowedModels` 要逐条手填。
 
-本插件把它简化成**一个插件条目**：装上后，每个新创建的顶层会话自动被注入一个 `subagent/model-selection-policy` 事件，授权配置里的 routes。子代理工具随之暴露 `provider`/`model`/`reasoning_effort` 参数，AI 就能说「派个小弟，用 workbuddy/hy3」。
+本插件把它简化成**一个插件条目**：装上后，每个新创建的顶层会话自动被注入一个 `subagent/model-selection-policy` 事件，把授权的 routes 灌进 `allowedModels`。子代理工具随之暴露 `provider`/`model`/`reasoning_effort` 参数，AI 就能说「派个小弟，用 workbuddy/hy3」。
 
-**默认配置就授权 WorkBuddy 的两个免费模型**（`hy3` ×0.00 限时免费、`step-5-preview` ×0.00 独家限免），装上即用、不烧积分。
+不写 `config:` 时走代码里的默认授权：**WorkBuddy 的两个免费模型**（`hy3` ×0.00 限时免费、`step-5-preview` ×0.00 独家限免），装上即用、不烧积分。
+
+> **限免会过期，让子代理自己核对。** 这些免费标签（`限时免费` / `独家限免`）是上游 WorkBuddy 的促销，随时可能结束。好在 `list_subagent_models` 返回的模型名自带实时费率——`dsh-workbuddy-connect` 把 catalog 的 `credits` 和 `badges` 折进了 `model.name`。所以派小弟前让它先 `list_subagent_models` 一把，看到 `x0.00 credits` 再指定，看到 `x0.29 credits` 就换模型或别指定。默认 routes 只是省一次手动配置，**不是**永久免费承诺。
 
 ## 安装
 
@@ -23,14 +25,9 @@ DSH 的 `subagent` 工具默认**不暴露** `provider` / `model` 参数——�
 - insert:
     - id: subagent-model-freedom
       name: dsh-subagent-model-freedom
-      config:
-        routes:
-          - provider: workbuddy
-            model: hy3
-          - provider: workbuddy
-            model: step-5-preview
-        injectIntoSubagentSessions: false
 ```
+
+就这样，不用写 `config:` —— 默认就授权 WorkBuddy 的免费模型。想自己指定模型列表才需要写 `config:`（见下方「配置」）。
 
 然后让 DSH 能 resolve 这个包。最简单：把本目录软链或拷进 profile 的 `node_modules`：
 
@@ -55,35 +52,39 @@ dsh plugin --profile web add dsh-subagent-model-freedom
 - `subagent` 工具应多出 `provider` / `model` / `reasoning_effort` 参数；
 - 派子代理时可以指定 `provider: "workbuddy", model: "hy3"`，小弟跑在免费模型上。
 
+派之前可以先让它自己核对费率，它会看到：
+
+```
+workbuddy/hy3 — Hy3 · x0.00 credits · 限时免费
+workbuddy/step-5-preview — Step-5-Preview · x0.00 credits · 独家限免
+```
+
 ## 配置
+
+`config:` 整块都是**可选**的，不写就走默认。
 
 | 字段 | 默认 | 说明 |
 |---|---|---|
 | `routes` | `[{workbuddy,hy3},{workbuddy,step-5-preview}]` | 授权的 provider/model 路由列表 |
 | `injectIntoSubagentSessions` | `false` | 是否也给子代理会话注入策略（默认 false，让继承链自然工作） |
 
-想加更多模型就往 `routes` 里加，比如：
+想自己指定模型列表才写 `config:`，比如：
 
 ```yaml
-routes:
-  - provider: workbuddy
-    model: hy3
-  - provider: workbuddy
-    model: glm-5.3      # 想烧积分的话
-  - provider: deepseek-official
-    model: deepseek-flash
+- insert:
+    - id: subagent-model-freedom
+      name: dsh-subagent-model-freedom
+      config:
+        routes:
+          - provider: workbuddy
+            model: hy3
+          - provider: workbuddy
+            model: glm-5.3      # 想烧积分的话
+          - provider: deepseek-official
+            model: deepseek-flash
 ```
 
-## 机制
-
-- 监听 `session/created`（时序早于 `agent/created`）；
-- 对新顶层会话 `session.append('subagent/model-selection-policy', { allowedModels: routes })`；
-- `tool-subagent` 在 `agent/created` 的 `selectForSession` 里读 `subagentModelSelectionPolicy` projection，策略事件存在 → 安装带参数的 subagent 工具定义；
-- projection 由 `tool-subagent` 注册（`subagentModelSelectionProjectionDefinition`），本插件只负责 append 事件，不碰 projection。
-
-## 与 cost-meter 对账的关系
-
-这个插件**不修** cost-meter 把 WorkBuddy token 当人民币折算的问题（那是 cost-meter 的 `pricing.js` auto 兜底模糊匹配 bug，详见 [dsh-cost-meter](https://github.com/Han-1413141/dsh-cost-meter)）。它只让子代理能用 WorkBuddy 模型。要修 cost-meter 的误算，见 cost-meter 的修复方向（给 `workbuddy` provider 加计费守卫）。
+把 `routes` 设成空数组则禁用（等价于不装本插件）。
 
 ## License
 

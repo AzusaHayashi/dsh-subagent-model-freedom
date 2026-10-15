@@ -1,14 +1,7 @@
 # dsh-subagent-model-freedom: 让子代理可以自由选择模型路由。
-# 默认授权 WorkBuddy 免费模型（hy3 / step-5-preview，x0.00 credits），
+# 不写 config 时走代码里的默认授权（WorkBuddy 免费模型 hy3 / step-5-preview），
 # 使 subagent 工具暴露 provider/model/reasoning_effort 参数。
-# 在新会话生效；想加别的 provider/model，编辑下方 routes。
+# 想自己指定模型列表再写 config，见 README「配置」一节。
 - insert:
     - id: subagent-model-freedom
       name: dsh-subagent-model-freedom
-      config:
-        routes:
-          - provider: workbuddy
-            model: hy3
-          - provider: workbuddy
-            model: step-5-preview
-        injectIntoSubagentSessions: false
